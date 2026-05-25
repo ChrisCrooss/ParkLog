@@ -77,10 +77,37 @@
       }
     }
 
-    /* Standard PWA Custom Host display block defaults */
-    s-card, s-alert {
-      display: block;
-      width: 100%;
+    /* Global s-card visual quality overrides to ensure padding and block rendering inside the light DOM */
+    s-card {
+      display: block !important;
+      background: var(--card-bg) !important;
+      border: 1px solid rgba(61, 86, 86, 0.3) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+    }
+    
+    @media (min-width: 480px) {
+      s-card {
+        padding: 40px !important;
+      }
+    }
+
+    /* Global s-alert visual overrides - stacking children cleanly */
+    s-alert {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      background: rgba(61, 86, 86, 0.02) !important;
+      border: 1px solid rgba(61, 86, 86, 0.3) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      align-items: flex-start !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
     }
 
     footer {
@@ -146,9 +173,33 @@
         super();
         this.attachShadow({ mode: 'open' });
       }
+
+      static get observedAttributes() {
+        return ['variant'];
+      }
+
+      attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'variant' && oldValue !== newValue) {
+          this.updateStyle();
+        }
+      }
+
       connectedCallback() {
+        this.render();
+        this.updateStyle();
+      }
+
+      render() {
+        this.shadowRoot.innerHTML = `
+          <style id="btn-styles"></style>
+          <button type="button">
+            <slot></slot>
+          </button>
+        `;
+      }
+
+      updateStyle() {
         const variant = this.getAttribute('variant') || 'primary';
-        
         let bg = 'var(--primary)';
         let border = 'none';
         let textColor = '#ffffff';
@@ -157,10 +208,13 @@
           bg = '#547272'; // Lighter Slate Green
         } else if (variant === 'accent') {
           bg = '#3D5656'; // Base Slate Green
+        } else if (variant === 'danger') {
+          bg = '#8b2e2e'; // Dark Slate Red
         }
 
-        this.shadowRoot.innerHTML = `
-          <style>
+        const styleEl = this.shadowRoot.getElementById('btn-styles');
+        if (styleEl) {
+          styleEl.textContent = `
             button {
               width: 100%;
               min-height: 80px; /* Truly giant button for accessibility */
@@ -188,16 +242,8 @@
             button:active {
               transform: scale(0.97);
             }
-          </style>
-          <button type="button">
-            <slot></slot>
-          </button>
-        `;
-        
-        this.shadowRoot.querySelector('button').addEventListener('click', (e) => {
-          e.stopPropagation(); // Prevent duplicate native clicks bubbling
-          this.dispatchEvent(new Event('click', { bubbles: true, composed: true }));
-        });
+          `;
+        }
       }
     }
 
@@ -512,24 +558,31 @@
         // Hide and clear med timer if we rectify
         clearInterval(medTimer);
         medTimer = null;
+        localStorage.removeItem('medication_timer_end');
         document.getElementById('medication-timer-card').classList.add('hidden');
       }
     }
 
-    function startMedicationTimer() {
+    function startMedicationTimer(durationSeconds = 2700) {
       clearInterval(medTimer);
       document.getElementById('medication-timer-card').classList.remove('hidden');
       
-      medTimeRemaining = 2700; // 45 mins
+      medTimeRemaining = durationSeconds;
+      const endTime = Date.now() + medTimeRemaining * 1000;
+      localStorage.setItem('medication_timer_end', endTime.toString());
+      
       updateMedTimerDisplay();
       
       medTimer = setInterval(() => {
-        medTimeRemaining--;
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+        medTimeRemaining = remaining;
         updateMedTimerDisplay();
         
         if (medTimeRemaining <= 0) {
           clearInterval(medTimer);
           medTimer = null;
+          localStorage.removeItem('medication_timer_end');
           
           alert(dictionary.notifTitle + ": " + dictionary.notifBody);
           
@@ -566,6 +619,19 @@
       updateUIState();
       registerServiceWorker();
 
+      // Check and resume existing medication timer if active
+      const endTimeStr = localStorage.getItem('medication_timer_end');
+      if (endTimeStr) {
+        const endTime = parseInt(endTimeStr, 10);
+        const now = Date.now();
+        if (endTime > now) {
+          const remaining = Math.ceil((endTime - now) / 1000);
+          startMedicationTimer(remaining);
+        } else {
+          localStorage.removeItem('medication_timer_end');
+        }
+      }
+
       // Language switcher binding
       const langSelector = document.getElementById('lang-selector');
       langSelector.value = currentLang;
@@ -589,6 +655,7 @@
 
       document.getElementById('btn-rectify').addEventListener('click', () => {
         localStorage.removeItem('fase');
+        localStorage.removeItem('medication_timer_end');
         updateUIState();
       });
 
@@ -602,17 +669,20 @@
               const btn = document.getElementById('btn-notifications');
               btn.textContent = dictionary.notifEnabled;
             } else {
-              alert("Permiso denegado para las notificaciones.");
+              alert("Permiso denegado para las notificaciones. El cronómetro visual se activará de todos modos en pantalla.");
+              startMedicationTimer();
             }
           });
         } else {
-          alert("Las notificaciones no son compatibles con este navegador.");
+          alert("Las notificaciones no son compatibles con este navegador. El cronómetro visual se activará de todos modos en pantalla.");
+          startMedicationTimer();
         }
       });
 
       document.getElementById('btn-cancel-med-timer').addEventListener('click', () => {
         clearInterval(medTimer);
         medTimer = null;
+        localStorage.removeItem('medication_timer_end');
         document.getElementById('medication-timer-card').classList.add('hidden');
       });
 

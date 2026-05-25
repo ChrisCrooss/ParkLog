@@ -177,9 +177,33 @@
         super();
         this.attachShadow({ mode: 'open' });
       }
+
+      static get observedAttributes() {
+        return ['variant'];
+      }
+
+      attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'variant' && oldValue !== newValue) {
+          this.updateStyle();
+        }
+      }
+
       connectedCallback() {
+        this.render();
+        this.updateStyle();
+      }
+
+      render() {
+        this.shadowRoot.innerHTML = `
+          <style id="btn-styles"></style>
+          <button type="button">
+            <slot></slot>
+          </button>
+        `;
+      }
+
+      updateStyle() {
         const variant = this.getAttribute('variant') || 'primary';
-        
         let bg = 'var(--primary)';
         let border = 'none';
         let textColor = '#ffffff';
@@ -192,8 +216,9 @@
           bg = '#8b2e2e'; // Dark Slate Red for clinical consistency
         }
 
-        this.shadowRoot.innerHTML = `
-          <style>
+        const styleEl = this.shadowRoot.getElementById('btn-styles');
+        if (styleEl) {
+          styleEl.textContent = `
             button {
               width: 100%;
               min-height: 80px; /* Giant ergonomic height */
@@ -221,16 +246,8 @@
             button:active {
               transform: scale(0.97);
             }
-          </style>
-          <button type="button">
-            <slot></slot>
-          </button>
-        `;
-        
-        this.shadowRoot.querySelector('button').addEventListener('click', (e) => {
-          e.stopPropagation(); // Stops native bubbles firing duplicate triggers on custom host
-          this.dispatchEvent(new Event('click', { bubbles: true, composed: true }));
-        });
+          `;
+        }
       }
     }
 
@@ -630,6 +647,8 @@
           }
         }, 100);
       }
+    }
+
     function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
