@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ParkLog</title>
+  
+  <!-- PWA Manifest & Meta Tags -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#FBFBF9">
+  
+  <!-- Inter Font for clinical and modern legibility -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Premium Clinical Radiante Light System variables */
+    :root {
+      --bg-light: #FBFBF9;       /* Broken white / ivory background */
+      --card-bg: #ffffff;
+      --card-border: #3D5656;
+      --primary: #3D5656;        /* Slate dark green accent */
+      --primary-hover: #2c3e3e;
+      --secondary: #3D5656;
+      --text-main: #000000;      /* Pure black for titles */
+      --text-muted: #2d3748;     /* Dark slate gray for maximum paragraph contrast */
+      
+      --font-stack: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.75; /* Spacious default line height */
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    p, h1, h2, h3, h4, span, div, button {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    header {
+      width: 100%;
+      z-index: 100;
+    }
+
+    main {
+      flex: 1;
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 32px; /* Generous breathing space */
+    }
+
+    @media (min-width: 480px) {
+      main {
+        padding: 48px 24px;
+        gap: 40px;
+      }
+    }
+
+    /* Standard PWA Custom Host display block defaults */
+    s-card, s-alert {
+      display: block;
+      width: 100%;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(61, 86, 86, 0.2);
+      background-color: #ffffff;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+
+  <!-- Declarative Stitch Web Components definitions -->
+  <script>
+    class StitchCard extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            .card-container {
+              background: var(--card-bg, #ffffff);
+              border: 1px solid rgba(61, 86, 86, 0.3);
+              border-radius: 16px;
+              padding: 24px;
+              box-shadow: none;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+            @media (min-width: 480px) {
+              .card-container {
+                padding: 40px;
+              }
+            }
+          </style>
+          <div class="card-container">
+            <slot></slot>
+          </div>
+        `;
+      }
+    }
+
+    class StitchButton extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        const variant = this.getAttribute('variant') || 'primary';
+        
+        let bg = 'var(--primary)';
+        let border = 'none';
+        let textColor = '#ffffff';
+
+        if (variant === 'secondary') {
+          bg = '#547272'; // Lighter Slate Green
+        } else if (variant === 'accent') {
+          bg = '#3D5656'; // Base Slate Green
+        }
+
+        this.shadowRoot.innerHTML = `
+          <style>
+            button {
+              width: 100%;
+              min-height: 80px; /* Truly giant button for accessibility */
+              background: ${bg};
+              color: ${textColor};
+              border: ${border};
+              border-radius: 12px; /* Soft rounded corners */
+              padding: 24px 28px; /* Generous vertical padding */
+              font-family: 'Inter', system-ui, sans-serif;
+              font-size: 1.25rem; /* Highly readable */
+              font-weight: 700; /* Bold text */
+              cursor: pointer;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 12px;
+              transition: all 0.2s ease;
+              touch-action: manipulation;
+              word-wrap: break-word;
+            }
+            button:hover {
+              opacity: 0.92;
+              background: ${bg};
+            }
+            button:active {
+              transform: scale(0.97);
+            }
+          </style>
+          <button type="button">
+            <slot></slot>
+          </button>
+        `;
+        
+        this.shadowRoot.querySelector('button').addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent duplicate native clicks bubbling
+          this.dispatchEvent(new Event('click', { bubbles: true, composed: true }));
+        });
+      }
+    }
+
+    class StitchAlert extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            .alert-container {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              background: rgba(61, 86, 86, 0.02);
+              border: 1px solid rgba(61, 86, 86, 0.3);
+              border-radius: 16px;
+              padding: 24px;
+              align-items: flex-start;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+            }
+          </style>
+          <div class="alert-container">
+            <slot></slot>
+          </div>
+        `;
+      }
+    }
+
+    class StitchBadge extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            .badge-container {
+              display: inline-flex;
+              align-items: center;
+              background-color: rgba(61, 86, 86, 0.06);
+              color: var(--primary);
+              padding: 6px 14px;
+              border-radius: 9999px;
+              font-size: 0.9rem;
+              font-weight: 700;
+              border: 1px solid rgba(61, 86, 86, 0.2);
+            }
+          </style>
+          <span class="badge-container">
+            <slot></slot>
+          </span>
+        `;
+      }
+    }
+
+    customElements.define('s-card', StitchCard);
+    customElements.define('s-button', StitchButton);
+    customElements.define('s-alert', StitchAlert);
+    customElements.define('s-badge', StitchBadge);
+  </script>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header>
+    <div style="background-color: #ffffff; border-bottom: 1px solid rgba(61, 86, 86, 0.2); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; min-height: 64px; flex-wrap: wrap; gap: 12px;">
+      <span style="font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+        ParkLog
+      </span>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <s-badge id="status-badge">Configurar</s-badge>
+        
+        <!-- Clean minimal language selector dropdown -->
+        <select id="lang-selector" style="background: #ffffff; border: 1px solid rgba(61, 86, 86, 0.3); color: var(--text-main); font-family: var(--font-stack); font-size: 0.95rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; outline: none;">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+        </select>
+        
+        <s-button id="btn-rectify" variant="secondary" style="min-height: 48px;">Cambiar</s-button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+    <!-- SAFETY TIP - Citing Martignon et al. (2020) -->
+    <s-alert id="medical-alert" class="fade-in">
+      <h4 id="alert-title" style="font-weight: 700; color: var(--primary); font-size: 1.25rem; margin-bottom: 4px;">Recomendación de Bienestar</h4>
+      <p id="alert-content" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.75; margin: 0;">
+        Para mayor efectividad y seguridad, realiza tus ejercicios obligatoriamente en tu fase activa o 'ON' de la medicación (aproximadamente entre 45 y 60 minutos después de tomar tu dosis).
+      </p>
+    </s-alert>
+
+    <!-- INITIAL CONFIGURATION -->
+    <section id="selection-view" class="fade-in" style="display: flex; flex-direction: column; gap: 28px;">
+      <div style="text-align: center; margin-bottom: 8px;">
+        <h1 id="main-title" style="font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; color: var(--text-main);">
+          Elige tu sesión de hoy
+        </h1>
+        <p id="main-subtitle" style="color: var(--text-muted); font-size: 1.15rem; max-width: 480px; margin: 0 auto; line-height: 1.75;">
+          Selecciona la modalidad en la que prefieres realizar tus rutinas diarias de movilidad y logopedia.
+        </p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- SOLO MODE -->
+        <s-card>
+          <h3 id="solo-card-title" style="font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Sesión Individual</h3>
+          <p id="solo-card-desc" style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.8; margin-bottom: 20px;">
+            Ideal para entrenar a tu propio ritmo, de forma independiente y autónoma.
+          </p>
+          <s-button id="btn-select-solo" variant="primary">Comenzar</s-button>
+        </s-card>
+
+        <!-- ASSISTED MODE -->
+        <s-card>
+          <h3 id="assisted-card-title" style="font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Sesión Asistida</h3>
+          <p id="assisted-card-desc" style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.8; margin-bottom: 20px;">
+            Ideal para realizar los movimientos guiados con el apoyo y compañía de un familiar.
+          </p>
+          <s-button id="btn-select-assisted" variant="accent">Comenzar</s-button>
+        </s-card>
+
+      </div>
+    </section>
+
+    <!-- LOGGED ACTIVE VIEW -->
+    <section id="active-view" class="fade-in hidden" style="display: flex; flex-direction: column; gap: 24px;">
+      <s-card>
+        <div style="text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+          <h2 id="active-title" style="font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px;">¡Todo listo!</h2>
+          <p id="active-desc" style="color: var(--text-muted); font-size: 1.15rem; max-width: 440px; line-height: 1.8; margin-bottom: 12px;">
+            Hemos guardado tu preferencia. Puedes continuar al panel de rutinas o activar recordatorios de medicación.
+          </p>
+          
+          <div style="display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px;">
+            <s-button id="btn-continue-dashboard" variant="primary">Ver Ejercicios del Día</s-button>
+            <s-button id="btn-notifications" variant="secondary">Activar Recordatorio de Medicina</s-button>
+          </div>
+        </div>
+      </s-card>
+
+      <!-- Dynamic Visual ON-Phase Medication Timer -->
+      <div id="medication-timer-card" class="hidden">
+        <s-card style="margin-top: 24px;">
+          <div style="text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+            <h3 id="med-timer-title" style="font-size: 1.35rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Cronómetro Fase ON</h3>
+            <p id="med-timer-desc" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.75; margin: 0;">
+              Tu medicación alcanzará su efecto óptimo en 45 minutos. Te avisaremos cuando sea el momento ideal para entrenar.
+            </p>
+            <div style="font-size: 4rem; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums; line-height: 1.1; margin: 8px 0;">
+              <span id="med-timer-display">45:00</span>
+            </div>
+            <s-button id="btn-cancel-med-timer" variant="secondary" style="min-height: 48px;">Cancelar Recordatorio</s-button>
+          </div>
+        </s-card>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <p id="footer-copyright">&copy; 2026 ParkLog. Proyecto Personal de Salud para mi Abuelo.</p>
+      <p id="footer-science" style="font-size: 0.95rem; color: #64748b; line-height: 1.6;">
+        Diseñado con cariño para mi abuelo con Parkinson en etapa temprana-media.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // i18n Translation Dictionary - Warm, Respectful, and Direct (No medical labels, Cero emojis)
+    const i18n = {
+      es: {
+        title: "ParkLog",
+        statusUnselected: "Configurar",
+        statusSolo: "Solo",
+        statusAssisted: "Asistido",
+        btnRectify: "Cambiar",
+        alertTitle: "Recomendación de Bienestar",
+        alertContent: "Para mayor efectividad y seguridad (Martignon et al., 2020), realiza tus ejercicios obligatoriamente en tu fase activa o 'ON' de la medicación, aproximadamente entre 45 y 60 minutos después de tomar tu dosis.",
+        mainTitle: "Elige tu sesión de hoy",
+        mainSubtitle: "Selecciona la modalidad en la que prefieres realizar tus rutinas diarias de movilidad y logopedia.",
+        soloTitle: "Sesión Individual",
+        soloDesc: "Ideal para entrenar a tu propio ritmo, de forma independiente y autónoma.",
+        soloBtn: "Comenzar",
+        assistedTitle: "Sesión Asistida",
+        assistedDesc: "Ideal para realizar los movimientos guiados con el apoyo y compañía de un familiar.",
+        assistedBtn: "Comenzar",
+        activeTitle: "¡Todo listo!",
+        activeDesc: "Hemos guardado tu preferencia. Puedes continuar al panel de rutinas o activar recordatorios de medicación.",
+        btnNotifications: "Activar Recordatorio de Medicina",
+        notifEnabled: "Alertas Activadas",
+        notifTitle: "ParkLog - Recordatorio",
+        notifBody: "¡Tu medicación está en fase ON! Es el momento ideal para realizar tus ejercicios.",
+        activeBtn: "Ver Ejercicios del Día",
+        footerCopyright: "© 2026 ParkLog. Proyecto Personal de Salud para mi Abuelo.",
+        footerScience: "Diseñado con cariño para mi abuelo con Parkinson en etapa temprana-media, basado en el ensayo clínico PARK-EASE (2023) y Martignon et al. (2020).",
+        medTimerTitle: "Cronómetro de Fase ON",
+        medTimerDesc: "Tu medicación alcanzará su efecto óptimo en 45 minutos. Te avisaremos cuando sea el momento ideal para entrenar.",
+        btnCancelMedTimer: "Cancelar Recordatorio"
+      },
+      en: {
+        title: "ParkLog",
+        statusUnselected: "Setup",
+        statusSolo: "Solo",
+        statusAssisted: "Assisted",
+        btnRectify: "Change",
+        alertTitle: "Well-being Recommendation",
+        alertContent: "For maximum effectiveness and safety (Martignon et al., 2020), always perform your exercises during your active 'ON' medication phase, approximately 45 to 60 minutes after taking your dose.",
+        mainTitle: "Choose today's session",
+        mainSubtitle: "Select the method you prefer to perform your daily mobility and speech routines.",
+        soloTitle: "Individual Session",
+        soloDesc: "Perfect for training at your own pace, independently and autonomously.",
+        soloBtn: "Start",
+        assistedTitle: "Assisted Session",
+        assistedDesc: "Perfect for performing guided routines with the support of a loved one.",
+        assistedBtn: "Start",
+        activeTitle: "All set!",
+        activeDesc: "We have saved your preference. You can proceed to the routines dashboard or enable daily medicine alerts.",
+        btnNotifications: "Activate Medicine Reminder",
+        notifEnabled: "Alerts Enabled",
+        notifTitle: "ParkLog - Daily Reminder",
+        notifBody: "Your medication is now in the ON phase! It is the ideal time to perform your routine.",
+        activeBtn: "View Today's Exercises",
+        footerCopyright: "© 2026 ParkLog. Personal Health Project for my Grandfather.",
+        footerScience: "Lovingly designed for my grandfather with early-to-mid stage Parkinson's, based on the PARK-EASE clinical trial (2023) and Martignon et al. (2020).",
+        medTimerTitle: "ON-Phase Countdown",
+        medTimerDesc: "Your medication will reach optimal effect in 45 minutes. We will alert you when it is the ideal time to exercise.",
+        btnCancelMedTimer: "Cancel Reminder"
+      }
+    };
+
+    function getActiveLanguage() {
+      const savedLang = localStorage.getItem('parklog_lang');
+      if (savedLang) return savedLang;
+      
+      const languages = navigator.languages || [navigator.language || 'en'];
+      for (const lang of languages) {
+        const cleanLang = lang.toLowerCase().split('-')[0];
+        if (['es', 'ca', 'gl'].includes(cleanLang)) return 'es';
+      }
+      return 'en';
+    }
+
+    let currentLang = getActiveLanguage();
+    let dictionary = i18n[currentLang];
+
+    let medTimer = null;
+    let medTimeRemaining = 2700; // 45 minutes
+
+    function applyTranslations() {
+      document.title = dictionary.title;
+      
+      const badge = document.getElementById('status-badge');
+      const savedFase = localStorage.getItem('fase');
+      if (!savedFase) {
+        badge.textContent = dictionary.statusUnselected;
+      } else {
+        badge.textContent = savedFase === 'media' ? dictionary.statusAssisted : dictionary.statusSolo;
+      }
+      
+      document.getElementById('btn-rectify').textContent = dictionary.btnRectify;
+      document.getElementById('alert-title').textContent = dictionary.alertTitle;
+      document.getElementById('alert-content').textContent = dictionary.alertContent;
+      document.getElementById('main-title').textContent = dictionary.mainTitle;
+      document.getElementById('main-subtitle').textContent = dictionary.mainSubtitle;
+      
+      document.getElementById('solo-card-title').textContent = dictionary.soloTitle;
+      document.getElementById('solo-card-desc').textContent = dictionary.soloDesc;
+      document.getElementById('btn-select-solo').textContent = dictionary.soloBtn;
+      
+      document.getElementById('assisted-card-title').textContent = dictionary.assistedTitle;
+      document.getElementById('assisted-card-desc').textContent = dictionary.assistedDesc;
+      document.getElementById('btn-select-assisted').textContent = dictionary.assistedBtn;
+      
+      document.getElementById('active-title').textContent = dictionary.activeTitle;
+      document.getElementById('active-desc').textContent = dictionary.activeDesc;
+      document.getElementById('btn-notifications').textContent = dictionary.btnNotifications;
+      document.getElementById('btn-continue-dashboard').textContent = dictionary.activeBtn;
+      
+      document.getElementById('footer-copyright').textContent = dictionary.footerCopyright;
+      document.getElementById('footer-science').textContent = dictionary.footerScience;
+
+      document.getElementById('med-timer-title').textContent = dictionary.medTimerTitle;
+      document.getElementById('med-timer-desc').textContent = dictionary.medTimerDesc;
+      document.getElementById('btn-cancel-med-timer').textContent = dictionary.btnCancelMedTimer;
+    }
+
+    function updateUIState() {
+      const savedFase = localStorage.getItem('fase');
+      const selectionView = document.getElementById('selection-view');
+      const activeView = document.getElementById('active-view');
+      const btnRectify = document.getElementById('btn-rectify');
+      const badge = document.getElementById('status-badge');
+
+      if (savedFase) {
+        selectionView.classList.add('hidden');
+        activeView.classList.remove('hidden');
+        btnRectify.classList.remove('hidden');
+        badge.textContent = savedFase === 'media' ? dictionary.statusAssisted : dictionary.statusSolo;
+      } else {
+        selectionView.classList.remove('hidden');
+        activeView.classList.add('hidden');
+        btnRectify.classList.add('hidden');
+        badge.textContent = dictionary.statusUnselected;
+        
+        // Hide and clear med timer if we rectify
+        clearInterval(medTimer);
+        medTimer = null;
+        document.getElementById('medication-timer-card').classList.add('hidden');
+      }
+    }
+
+    function startMedicationTimer() {
+      clearInterval(medTimer);
+      document.getElementById('medication-timer-card').classList.remove('hidden');
+      
+      medTimeRemaining = 2700; // 45 mins
+      updateMedTimerDisplay();
+      
+      medTimer = setInterval(() => {
+        medTimeRemaining--;
+        updateMedTimerDisplay();
+        
+        if (medTimeRemaining <= 0) {
+          clearInterval(medTimer);
+          medTimer = null;
+          
+          alert(dictionary.notifTitle + ": " + dictionary.notifBody);
+          
+          try {
+            new Notification(dictionary.notifTitle, {
+              body: dictionary.notifBody
+            });
+          } catch(e) {}
+          
+          document.getElementById('medication-timer-card').classList.add('hidden');
+        }
+      }, 1000);
+    }
+
+    function updateMedTimerDisplay() {
+      const mins = Math.floor(medTimeRemaining / 60);
+      const secs = medTimeRemaining % 60;
+      const displayStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      document.getElementById('med-timer-display').textContent = displayStr;
+    }
+
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((reg) => console.log('ServiceWorker registered:', reg.scope))
+            .catch((err) => console.error('ServiceWorker error:', err));
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      updateUIState();
+      registerServiceWorker();
+
+      // Language switcher binding
+      const langSelector = document.getElementById('lang-selector');
+      langSelector.value = currentLang;
+      langSelector.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem('parklog_lang', currentLang);
+        dictionary = i18n[currentLang];
+        applyTranslations();
+        updateUIState();
+      });
+
+      document.getElementById('btn-select-solo').addEventListener('click', () => {
+        localStorage.setItem('fase', 'inicial'); // Solo = inicial
+        updateUIState();
+      });
+
+      document.getElementById('btn-select-assisted').addEventListener('click', () => {
+        localStorage.setItem('fase', 'media'); // Asistido = media
+        updateUIState();
+      });
+
+      document.getElementById('btn-rectify').addEventListener('click', () => {
+        localStorage.removeItem('fase');
+        updateUIState();
+      });
+
+      document.getElementById('btn-notifications').addEventListener('click', () => {
+        if ('Notification' in window) {
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              alert(dictionary.notifEnabled); 
+              startMedicationTimer(); // Activates the 45 minutes ON-phase timer
+              
+              const btn = document.getElementById('btn-notifications');
+              btn.textContent = dictionary.notifEnabled;
+            } else {
+              alert("Permiso denegado para las notificaciones.");
+            }
+          });
+        } else {
+          alert("Las notificaciones no son compatibles con este navegador.");
+        }
+      });
+
+      document.getElementById('btn-cancel-med-timer').addEventListener('click', () => {
+        clearInterval(medTimer);
+        medTimer = null;
+        document.getElementById('medication-timer-card').classList.add('hidden');
+      });
+
+      document.getElementById('btn-continue-dashboard').addEventListener('click', () => {
+        window.location.href = 'ejercicios.html';
+      });
+    });
+  </script>
+</body>
+</html>

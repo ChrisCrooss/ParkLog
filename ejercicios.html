@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ParkLog — Ejercicios</title>
+  
+  <!-- PWA Manifest & Meta Tags -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#FBFBF9">
+
+  <!-- Inter Font for clinical legibility -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Premium Clinical Radiante Light System variables */
+    :root {
+      --bg-light: #FBFBF9;       /* Broken white / ivory background */
+      --card-bg: #ffffff;
+      --card-border: #3D5656;
+      --primary: #3D5656;        /* Slate dark green accent */
+      --primary-hover: #2c3e3e;
+      --secondary: #3D5656;
+      --success: #3D5656;
+      --warning: #3D5656;
+      --danger: #dc2626;        /* Alert red */
+      --text-main: #000000;      /* Pure black for titles */
+      --text-muted: #2d3748;     /* Dark slate gray for maximum paragraph contrast */
+      
+      --font-stack: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.75; /* Spacious default line height */
+      touch-action: manipulation;
+    }
+
+    p, h1, h2, h3, h4, span, div, button {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    header {
+      width: 100%;
+      z-index: 100;
+    }
+
+    main {
+      flex: 1;
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px; /* Generous spaces to breathe */
+    }
+
+    @media (min-width: 480px) {
+      main {
+        padding: 48px 24px;
+        gap: 32px;
+      }
+    }
+
+    /* Global s-card visual quality overrides to ensure padding and block rendering inside the light DOM */
+    s-card {
+      display: block !important;
+      background: var(--card-bg) !important;
+      border: 1px solid rgba(61, 86, 86, 0.3) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+    }
+    
+    @media (min-width: 480px) {
+      s-card {
+        padding: 40px !important;
+      }
+    }
+
+    /* Global s-alert visual overrides - stacking children cleanly */
+    s-alert {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      background: rgba(61, 86, 86, 0.02) !important;
+      border: 1px solid rgba(61, 86, 86, 0.3) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      align-items: flex-start !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(61, 86, 86, 0.2);
+      background-color: #ffffff;
+      margin-top: auto;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 12px; /* Easily visible progress bar for older adults */
+      background: #f1f5f9;
+      border: 1px solid rgba(61, 86, 86, 0.2);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      border-radius: 9999px;
+      transition: width 0.1s linear;
+    }
+  </style>
+
+  <!-- Declarative Stitch Web Components definitions -->
+  <script>
+    class StitchCard extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: block;
+            }
+          </style>
+          <slot></slot>
+        `;
+      }
+    }
+
+    class StitchButton extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        const variant = this.getAttribute('variant') || 'primary';
+        
+        let bg = 'var(--primary)';
+        let border = 'none';
+        let textColor = '#ffffff';
+
+        if (variant === 'secondary') {
+          bg = '#547272'; // Lighter Slate Green
+        } else if (variant === 'accent') {
+          bg = '#3D5656'; // Base Slate Green
+        } else if (variant === 'danger') {
+          bg = '#8b2e2e'; // Dark Slate Red for clinical consistency
+        }
+
+        this.shadowRoot.innerHTML = `
+          <style>
+            button {
+              width: 100%;
+              min-height: 80px; /* Giant ergonomic height */
+              background: ${bg};
+              color: ${textColor};
+              border: ${border};
+              border-radius: 12px; /* Soft rounded corners */
+              padding: 24px 28px; /* Generous padding */
+              font-family: 'Inter', system-ui, sans-serif;
+              font-size: 1.25rem; /* Highly readable */
+              font-weight: 700; /* Bold text */
+              cursor: pointer;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 12px;
+              transition: all 0.2s ease;
+              touch-action: manipulation;
+              word-wrap: break-word;
+            }
+            button:hover {
+              opacity: 0.92;
+              background: ${bg};
+            }
+            button:active {
+              transform: scale(0.97);
+            }
+          </style>
+          <button type="button">
+            <slot></slot>
+          </button>
+        `;
+        
+        this.shadowRoot.querySelector('button').addEventListener('click', (e) => {
+          e.stopPropagation(); // Stops native bubbles firing duplicate triggers on custom host
+          this.dispatchEvent(new Event('click', { bubbles: true, composed: true }));
+        });
+      }
+    }
+
+    class StitchAlert extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: block;
+            }
+          </style>
+          <slot></slot>
+        `;
+      }
+    }
+
+    class StitchBadge extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+      connectedCallback() {
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: inline-flex;
+              align-items: center;
+              background-color: rgba(61, 86, 86, 0.06);
+              color: var(--primary);
+              padding: 6px 14px;
+              border-radius: 9999px;
+              font-size: 0.9rem;
+              font-weight: 700;
+              border: 1px solid rgba(61, 86, 86, 0.2);
+            }
+          </style>
+          <slot></slot>
+        `;
+      }
+    }
+
+    customElements.define('s-card', StitchCard);
+    customElements.define('s-button', StitchButton);
+    customElements.define('s-alert', StitchAlert);
+    customElements.define('s-badge', StitchBadge);
+  </script>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div style="background-color: #ffffff; border-bottom: 1px solid rgba(61, 86, 86, 0.2); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; min-height: 64px; flex-wrap: wrap; gap: 12px;">
+      <span style="font-weight: 700; font-size: 1.3rem; color: var(--text-main);">
+        ParkLog
+      </span>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <s-badge id="stage-badge">Solo</s-badge>
+        
+        <!-- Clean minimal language selector dropdown -->
+        <select id="lang-selector" style="background: #ffffff; border: 1px solid rgba(61, 86, 86, 0.3); color: var(--text-main); font-family: var(--font-stack); font-size: 0.95rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; outline: none;">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+        </select>
+        
+        <s-button id="btn-back" variant="secondary" style="min-height: 48px;">Volver</s-button>
+      </div>
+    </div>
+  </header>
+
+  <main class="fade-in">
+
+    <!-- DYNAMIC ROUTINE PANEL (PARK-EASE Trial) -->
+    <s-card id="routine-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid rgba(61, 86, 86, 0.2); padding-bottom: 18px; margin-bottom: 20px;">
+        <h2 id="routine-day-title" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em; margin-bottom: 0px;">Sesión de Hoy</h2>
+        <s-badge id="routine-type-badge">Fuerza & Agilidad</s-badge>
+      </div>
+      
+      <!-- Visual safety alert active in "Asistido" stage -->
+      <s-alert id="media-safety-alert" class="hidden" style="margin-bottom: 24px;">
+        <h4 id="media-safety-title" style="font-weight: 700; color: var(--primary); font-size: 1.25rem; margin-bottom: 8px;">Recomendación para tu sesión</h4>
+        <p id="media-safety-content" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.75;">Por tu comodidad y seguridad, te sugerimos realizar esta rutina sentado en una silla estable y con respaldo.</p>
+      </s-alert>
+
+      <p id="routine-desc" style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.8; margin-bottom: 24px;">
+        Ejercicios suaves de estiramiento y movimiento de dedos para mantener la agilidad al comer y escribir.
+      </p>
+      
+      <!-- Timer UI -->
+      <div style="text-align: center; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 16px;">
+        <div id="lbl-timer-type" style="font-size: 1rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Duración Recomendada</div>
+        
+        <!-- Repaired central timer container with active span display -->
+        <div style="font-size: 4.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; margin: 8px 0; text-align: center; width: 100%;">
+          <span id="timer-display">60s</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+          <s-button id="btn-timer-start" variant="primary">Iniciar</s-button>
+          <s-button id="btn-timer-reset" variant="secondary">Reiniciar</s-button>
+        </div>
+      </div>
+    </s-card>
+
+    <!-- FIXED VOICE AND SWALLOWING MODULE -->
+    <s-card>
+      <h3 id="voice-module-title" style="font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Logopedia y Voz</h3>
+      <p id="voice-module-desc" style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.8; margin-bottom: 24px;">
+        Ejercicios diarios sencillos para fortalecer el habla y la capacidad natural de deglución.
+      </p>
+
+      <!-- Step 1: Vocal Sustained "Ah" -->
+      <div style="border-top: 1px solid rgba(61, 86, 86, 0.2); padding-top: 24px; margin-top: 24px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span id="voice-step1-lbl" style="font-weight: 700; font-size: 1.15rem; color: var(--text-main);">Paso 1: Emisión del "Ah" sostenido</span>
+          <s-badge id="vocal-badge-duration">15 Segundos</s-badge>
+        </div>
+        <p id="voice-step1-desc" style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px;">
+          Toma aire profundamente y emite un "Ah" continuo, claro y constante.
+        </p>
+
+        <!-- Progress bar -->
+        <div class="progress-bar-container">
+          <div id="vocal-progress" class="progress-bar-fill"></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+          <span id="vocal-timer-text" style="font-weight: 700; font-size: 1.4rem; color: var(--text-main); font-variant-numeric: tabular-nums;">15.0s</span>
+          <s-button id="btn-vocal-start" variant="accent">Iniciar</s-button>
+        </div>
+      </div>
+
+      <!-- Step 2: Throat Swallow -->
+      <div style="border-top: 1px solid rgba(61, 86, 86, 0.2); padding-top: 24px; display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+        <span id="voice-step2-lbl" style="font-weight: 700; font-size: 1.15rem; color: var(--text-main);">Paso 2: Ejercicio de Deglución</span>
+        <p id="voice-step2-desc" style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px;">
+          Traga saliva con firmeza inclinando ligeramente la barbilla hacia el pecho para ejercitar la garganta.
+        </p>
+        <s-button id="btn-swallow-check" variant="secondary">Completado</s-button>
+      </div>
+    </s-card>
+
+  </main>
+
+  <footer>
+    <p id="footer-science">Diseño basado en el ensayo clínico PARK-EASE (2023) y directrices de Martignon et al. (2020).</p>
+  </footer>
+
+  <script>
+    // i18n Translation dictionary - Warm, Respectful, and Direct (No medical jargon, Cero emojis)
+    const i18n = {
+      es: {
+        stageBadgeInicial: "Solo",
+        stageBadgeMedia: "Asistido",
+        btnBack: "Volver",
+        routineHeader: "Sesión de Hoy",
+        mediaSafetyTitle: "Recomendación para tu sesión",
+        mediaSafetyContent: "Por tu comodidad y seguridad, te sugerimos realizar esta rutina sentado en una silla estable y con respaldo.",
+        btnTimerStart: "Iniciar",
+        btnTimerPause: "Pausar",
+        btnTimerReset: "Reiniciar",
+        routineSuccess: "¡Completado!",
+        voiceModuleTitle: "Logopedia y Voz",
+        voiceModuleDesc: "Ejercicios diarios sencillos para fortalecer el habla y la capacidad natural de deglución.",
+        voiceStep1Lbl: "Paso 1: Emisión del \"Ah\" sostenido",
+        voiceStep1Desc: "Toma aire profundamente y emite un \"Ah\" continuo, claro y constante.",
+        btnVocalStart: "Iniciar",
+        btnVocalStop: "Detener",
+        vocalSuccess: "¡Concluido!",
+        vocalSecondsBadge: "15 Segundos",
+        voiceStep2Lbl: "Paso 2: Ejercicio de Deglución",
+        voiceStep2Desc: "Traga saliva con firmeza inclinando ligeramente la barbilla hacia el pecho para ejercitar la garganta.",
+        btnSwallowCheck: "Completado",
+        swallowSuccess: "¡Excelente!",
+        timerLabel: "Duración Recomendada",
+        footerScience: "Diseño basado en el ensayo clínico PARK-EASE (2023) y directrices de Martignon et al. (2020).",
+        days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+        routines: {
+          agility: {
+            title: "Agilidad de Manos",
+            desc: "Movimientos suaves de estiramiento y coordinación de dedos para mantener la destreza al comer y escribir."
+          },
+          strength: {
+            title: "Fuerza y Coordinación",
+            desc: "Movimientos guiados seguros para fortalecer los brazos y conservar una buena estabilidad general."
+          },
+          stretching: {
+            title: "Flexibilidad y Relajación",
+            desc: "Estiramientos suaves de palmas y muñecas para mitigar la rigidez y favorecer la relajación muscular."
+          }
+        }
+      },
+      en: {
+        stageBadgeInicial: "Solo",
+        stageBadgeMedia: "Assisted",
+        btnBack: "Back",
+        routineHeader: "Today's Session",
+        mediaSafetyTitle: "Session recommendation",
+        mediaSafetyContent: "For your comfort and safety, we suggest performing this routine while seated comfortably on a stable chair.",
+        btnTimerStart: "Start",
+        btnTimerPause: "Pause",
+        btnTimerReset: "Reset",
+        routineSuccess: "Completed!",
+        voiceModuleTitle: "Speech & Voice",
+        voiceModuleDesc: "Simple daily exercises to strengthen speech and natural swallowing capacity.",
+        voiceStep1Lbl: "Step 1: Sustained \"Ah\" Sound",
+        voiceStep1Desc: "Take a deep breath and project a steady, clear, and constant \"Ah\" sound.",
+        btnVocalStart: "Start",
+        btnVocalStop: "Stop",
+        vocalSuccess: "Completed!",
+        vocalSecondsBadge: "15 Seconds",
+        voiceStep2Lbl: "Step 2: Swallowing Practice",
+        voiceStep2Desc: "Perform a firm swallow while tucking your chin slightly towards your chest to strengthen throat muscles.",
+        btnSwallowCheck: "Completed",
+        swallowSuccess: "Great job!",
+        timerLabel: "Recommended Duration",
+        footerScience: "Designed based on the PARK-EASE clinical trial (2023) and Martignon et al. (2020).",
+        days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        routines: {
+          agility: {
+            title: "Hand Agility",
+            desc: "Soft stretching and coordination finger movements to maintain dexterity for dining and writing."
+          },
+          strength: {
+            title: "Strength & Balance",
+            desc: "Safe guided movements to strengthen arms and maintain excellent overall body stability."
+          },
+          stretching: {
+            title: "Flexibility & Warmup",
+            desc: "Soft wrist and palm stretches to relieve stiffness and improve muscle relaxation."
+          }
+        }
+      }
+    };
+
+    function getActiveLanguage() {
+      const savedLang = localStorage.getItem('parklog_lang');
+      if (savedLang) return savedLang;
+      
+      const languages = navigator.languages || [navigator.language || 'en'];
+      for (const lang of languages) {
+        const cleanLang = lang.toLowerCase().split('-')[0];
+        if (['es', 'ca', 'gl'].includes(cleanLang)) return 'es';
+      }
+      return 'en';
+    }
+
+    let currentLang = getActiveLanguage();
+    let dictionary = i18n[currentLang];
+
+    // State Variables
+    let baseTime = 60;
+    let activeTimer = null;
+    let timeRemaining = 60;
+    
+    // Voice module state
+    let vocalTimer = null;
+    let vocalRemaining = 15;
+
+    function getDailyRoutine() {
+      const dayIndex = new Date().getDay();
+      if ([1, 3, 5].includes(dayIndex)) {
+        return { type: 'agility', data: dictionary.routines.agility };
+      } else if ([2, 4].includes(dayIndex)) {
+        return { type: 'strength', data: dictionary.routines.strength };
+      } else {
+        return { type: 'stretching', data: dictionary.routines.stretching };
+      }
+    }
+
+    function applyTranslations() {
+      document.getElementById('btn-back').textContent = dictionary.btnBack;
+      document.getElementById('btn-timer-reset').textContent = dictionary.btnTimerReset;
+      
+      document.getElementById('media-safety-title').textContent = dictionary.mediaSafetyTitle;
+      document.getElementById('media-safety-content').textContent = dictionary.mediaSafetyContent;
+      document.getElementById('lbl-timer-type').textContent = dictionary.timerLabel;
+      
+      // Voice Module
+      document.getElementById('voice-module-title').textContent = dictionary.voiceModuleTitle;
+      document.getElementById('voice-module-desc').textContent = dictionary.voiceModuleDesc;
+      document.getElementById('voice-step1-lbl').textContent = dictionary.voiceStep1Lbl;
+      document.getElementById('voice-step1-desc').textContent = dictionary.voiceStep1Desc;
+      document.getElementById('vocal-badge-duration').textContent = dictionary.vocalSecondsBadge;
+      document.getElementById('voice-step2-lbl').textContent = dictionary.voiceStep2Lbl;
+      document.getElementById('voice-step2-desc').textContent = dictionary.voiceStep2Desc;
+      document.getElementById('btn-swallow-check').textContent = dictionary.btnSwallowCheck;
+      
+      document.getElementById('footer-science').textContent = dictionary.footerScience;
+    }
+
+    function applyStageChanges() {
+      const currentStage = localStorage.getItem('fase') || 'inicial';
+      const isMedia = currentStage === 'media';
+      const badge = document.getElementById('stage-badge');
+      const safetyAlert = document.getElementById('media-safety-alert');
+      const routine = getDailyRoutine();
+
+      if (isMedia) {
+        badge.textContent = dictionary.stageBadgeMedia;
+        if (safetyAlert) safetyAlert.classList.remove('hidden');
+        
+        if (routine.type === 'agility') {
+          baseTime = Math.round(60 * 0.8); // 48s (20% reduction)
+        } else {
+          baseTime = 60;
+        }
+      } else {
+        badge.textContent = dictionary.stageBadgeInicial;
+        if (safetyAlert) safetyAlert.classList.add('hidden');
+        
+        baseTime = 60; // Default 60s
+      }
+
+      resetExerciseTimer();
+    }
+
+    function renderDailyRoutine() {
+      const dayIndex = new Date().getDay();
+      const dayName = dictionary.days[dayIndex];
+      const routine = getDailyRoutine();
+
+      document.getElementById('routine-day-title').textContent = `${dictionary.routineHeader}: ${dayName}`;
+      document.getElementById('routine-desc').textContent = routine.data.desc;
+      
+      const typeBadge = document.getElementById('routine-type-badge');
+      typeBadge.textContent = routine.data.title;
+    }
+
+    function resetExerciseTimer() {
+      clearInterval(activeTimer);
+      activeTimer = null;
+      timeRemaining = baseTime;
+      document.getElementById('timer-display').textContent = `${timeRemaining}s`;
+      document.getElementById('btn-timer-start').textContent = dictionary.btnTimerStart;
+      document.getElementById('btn-timer-start').setAttribute('variant', 'primary');
+    }
+
+    function toggleExerciseTimer() {
+      const btn = document.getElementById('btn-timer-start');
+      if (activeTimer) {
+        clearInterval(activeTimer);
+        activeTimer = null;
+        btn.textContent = dictionary.btnTimerStart;
+        btn.setAttribute('variant', 'primary');
+      } else {
+        btn.textContent = dictionary.btnTimerPause;
+        btn.setAttribute('variant', 'secondary');
+        activeTimer = setInterval(() => {
+          timeRemaining--;
+          document.getElementById('timer-display').textContent = `${timeRemaining}s`;
+          
+          if (timeRemaining <= 0) {
+            clearInterval(activeTimer);
+            activeTimer = null;
+            document.getElementById('timer-display').textContent = dictionary.routineSuccess;
+            btn.textContent = dictionary.btnTimerStart;
+            btn.setAttribute('variant', 'primary');
+          }
+        }, 1000);
+      }
+    }
+
+    function toggleVocalTimer() {
+      const btn = document.getElementById('btn-vocal-start');
+      const fill = document.getElementById('vocal-progress');
+      const text = document.getElementById('vocal-timer-text');
+
+      if (vocalTimer) {
+        clearInterval(vocalTimer);
+        vocalTimer = null;
+        btn.textContent = dictionary.btnVocalStart;
+        btn.setAttribute('variant', 'accent');
+      } else {
+        vocalRemaining = 15.0;
+        btn.textContent = dictionary.btnVocalStop;
+        btn.setAttribute('variant', 'danger');
+        
+        vocalTimer = setInterval(() => {
+          vocalRemaining -= 0.1;
+          if (vocalRemaining < 0) vocalRemaining = 0;
+
+          text.textContent = `${vocalRemaining.toFixed(1)}s`;
+          
+          const pct = ((15.0 - vocalRemaining) / 15.0) * 100;
+          fill.style.width = `${pct}%`;
+
+          if (vocalRemaining <= 0) {
+            clearInterval(vocalTimer);
+            vocalTimer = null;
+            text.textContent = dictionary.vocalSuccess;
+            btn.textContent = dictionary.btnVocalStart;
+            btn.setAttribute('variant', 'accent');
+          }
+        }, 100);
+      }
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((reg) => console.log('ServiceWorker registered:', reg.scope))
+            .catch((err) => console.error('ServiceWorker error:', err));
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      renderDailyRoutine();
+      applyStageChanges();
+      registerServiceWorker();
+
+      document.getElementById('btn-back').addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+
+      // Language switcher binding
+      const langSelector = document.getElementById('lang-selector');
+      langSelector.value = currentLang;
+      langSelector.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem('parklog_lang', currentLang);
+        dictionary = i18n[currentLang];
+        applyTranslations();
+        renderDailyRoutine();
+        applyStageChanges();
+      });
+
+      document.getElementById('btn-timer-start').addEventListener('click', toggleExerciseTimer);
+      document.getElementById('btn-timer-reset').addEventListener('click', resetExerciseTimer);
+      document.getElementById('btn-vocal-start').addEventListener('click', toggleVocalTimer);
+
+      document.getElementById('btn-swallow-check').addEventListener('click', () => {
+        const btn = document.getElementById('btn-swallow-check');
+        btn.textContent = dictionary.swallowSuccess;
+        btn.setAttribute('variant', 'primary');
+        setTimeout(() => {
+          btn.textContent = dictionary.btnSwallowCheck;
+          btn.setAttribute('variant', 'secondary');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
