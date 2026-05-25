@@ -441,7 +441,8 @@
             title: "Flexibilidad y Relajación",
             desc: "Estiramientos suaves de palmas y muñecas para mitigar la rigidez y favorecer la relajación muscular."
           }
-        }
+        },
+        iosNotifWarning: "Para activar los recordatorios de medicamentos en iPhone, añade esta aplicación a tu pantalla de inicio primero. Los cronómetros de ejercicio seguirán funcionando normalmente."
       },
       en: {
         stageBadgeInicial: "Solo",
@@ -482,7 +483,8 @@
             title: "Flexibility & Warmup",
             desc: "Soft wrist and palm stretches to relieve stiffness and improve muscle relaxation."
           }
-        }
+        },
+        iosNotifWarning: "To enable medicine reminders on iPhone, add this app to your home screen first. Exercise timers will continue to work normally."
       }
     };
 
@@ -509,6 +511,19 @@
     // Voice module state
     let vocalTimer = null;
     let vocalRemaining = 15;
+
+    // Helper for iOS notification compatibility
+    function requestMedicationNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            alert(dictionary.notifEnabled || "Alertas Activadas");
+          }
+        });
+      } else {
+        alert(dictionary.iosNotifWarning);
+      }
+    }
 
     function getDailyRoutine() {
       const dayIndex = new Date().getDay();

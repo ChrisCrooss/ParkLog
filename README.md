@@ -71,6 +71,21 @@ Al ser una aplicación 100% estática y del lado del cliente, no requiere servid
 
 ---
 
+## ❓ Notas Técnicas y Preguntas Frecuentes (FAQ)
+
+### ¿Cómo activar las notificaciones y recordatorios de medicación en iPhone (iOS)?
+Debido a las políticas de seguridad y restricciones del ecosistema de Apple, la API de notificaciones locales (`Notification`) no se encuentra activa de forma predeterminada en el navegador Safari para iOS. 
+
+Para que los recordatorios de medicamentos funcionen correctamente en tu iPhone:
+1. Abre la aplicación en Safari.
+2. Toca el botón **Compartir** (icono de la caja con la flecha hacia arriba).
+3. Selecciona la opción **Añadir a pantalla de inicio** (Add to Home Screen).
+4. Abre la aplicación desde el icono instalado en tu pantalla de inicio. Al hacerlo, el navegador activará el soporte completo de PWA y podrás habilitar las alertas sin inconvenientes. 
+
+*Nota: Los temporizadores de ejercicios y logopedia continuarán funcionando de forma nativa e independiente sin necesidad de realizar esta instalación.*
+
+---
+
 ## 📝 Licencia
 
 Este es un proyecto de código abierto y portafolio universitario para la University of South Florida (USF) bajo la Licencia MIT.

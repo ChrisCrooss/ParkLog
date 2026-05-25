@@ -313,9 +313,14 @@
   <!-- TOP BAR -->
   <header>
     <div style="background-color: #ffffff; border-bottom: 1px solid rgba(61, 86, 86, 0.2); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; min-height: 64px; flex-wrap: wrap; gap: 12px;">
-      <span style="font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-        ParkLog
-      </span>
+      <div style="display: flex; flex-direction: column; gap: 4px; max-width: 100%;">
+        <span style="font-weight: 700; font-size: 1.45rem; letter-spacing: -0.02em; color: var(--text-main);">
+          ParkLog
+        </span>
+        <span id="medical-subtitle" style="font-size: 18px; color: var(--text-muted); font-weight: 500; line-height: 1.4;">
+          Plataforma de apoyo para personas con la enfermedad de Parkinson en etapa inicial o media
+        </span>
+      </div>
       <div style="display: flex; align-items: center; gap: 12px;">
         <s-badge id="status-badge">Configurar</s-badge>
         
@@ -371,6 +376,12 @@
           <s-button id="btn-select-assisted" variant="accent">Comenzar</s-button>
         </s-card>
 
+      </div>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <p id="hoehn-yahr-note" style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 480px; margin: 0 auto; font-weight: 500;">
+          Nota: Las rutinas están optimizadas para los estadios 1 a 2.5 de la escala Hoehn and Yahr (etapa inicial-media).
+        </p>
       </div>
     </section>
 
@@ -448,7 +459,10 @@
         footerScience: "Diseñado con cariño para mi abuelo con Parkinson en etapa temprana-media, basado en el ensayo clínico PARK-EASE (2023) y Martignon et al. (2020).",
         medTimerTitle: "Cronómetro de Fase ON",
         medTimerDesc: "Tu medicación alcanzará su efecto óptimo en 45 minutos. Te avisaremos cuando sea el momento ideal para entrenar.",
-        btnCancelMedTimer: "Cancelar Recordatorio"
+        btnCancelMedTimer: "Cancelar Recordatorio",
+        medicalSubtitle: "Plataforma de apoyo para personas con la enfermedad de Parkinson en etapa inicial o media",
+        hoehnYahrNote: "Nota: Las rutinas están optimizadas para los estadios 1 a 2.5 de la escala Hoehn and Yahr (etapa inicial-media).",
+        iosNotifWarning: "Para activar los recordatorios de medicamentos en iPhone, añade esta aplicación a tu pantalla de inicio primero. Los cronómetros de ejercicio seguirán funcionando normalmente."
       },
       en: {
         title: "ParkLog",
@@ -477,7 +491,10 @@
         footerScience: "Lovingly designed for my grandfather with early-to-mid stage Parkinson's, based on the PARK-EASE clinical trial (2023) and Martignon et al. (2020).",
         medTimerTitle: "ON-Phase Countdown",
         medTimerDesc: "Your medication will reach optimal effect in 45 minutes. We will alert you when it is the ideal time to exercise.",
-        btnCancelMedTimer: "Cancel Reminder"
+        btnCancelMedTimer: "Cancel Reminder",
+        medicalSubtitle: "Support platform for people with early or mid-stage Parkinson's disease",
+        hoehnYahrNote: "Note: Routines are optimized for stages 1 to 2.5 on the Hoehn and Yahr scale (early-to-mid stage).",
+        iosNotifWarning: "To enable medicine reminders on iPhone, add this app to your home screen first. Exercise timers will continue to work normally."
       }
     };
 
@@ -535,6 +552,8 @@
       document.getElementById('med-timer-title').textContent = dictionary.medTimerTitle;
       document.getElementById('med-timer-desc').textContent = dictionary.medTimerDesc;
       document.getElementById('btn-cancel-med-timer').textContent = dictionary.btnCancelMedTimer;
+      document.getElementById('medical-subtitle').textContent = dictionary.medicalSubtitle;
+      document.getElementById('hoehn-yahr-note').textContent = dictionary.hoehnYahrNote;
     }
 
     function updateUIState() {
@@ -674,7 +693,7 @@
             }
           });
         } else {
-          alert("Las notificaciones no son compatibles con este navegador. El cronómetro visual se activará de todos modos en pantalla.");
+          alert(dictionary.iosNotifWarning);
           startMedicationTimer();
         }
       });
