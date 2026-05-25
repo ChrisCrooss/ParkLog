@@ -1,23 +1,23 @@
-# 🧠 ParkLog — Tu Compañero Diario de Parkinson
+# ParkLog — Tu Compañero Diario de Parkinson
 
 [![PWA Status](https://img.shields.io/badge/PWA-Compatible-brightgreen.svg?style=flat-square)](#)
 [![Accessibility](https://img.shields.io/badge/Accessibility-Parkinson--Friendly-blue.svg?style=flat-square)](#)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg?style=flat-square)](#)
 
-> Una aplicación web progresiva (PWA), ergonómica, autogestionada y respaldada por evidencia científica, diseñada específicamente para mitigar los síntomas motores, de habla y deglución en pacientes con enfermedad de Parkinson.
+> Una aplicación web progresiva (PWA) y respaldada por evidencia científica, diseñada específicamente para mitigar los síntomas motores, de habla y deglución en pacientes con enfermedad de Parkinson.
 
 ---
 
-## 🌟 Motivación Humana
+## Motivación Humana
 
-**ParkLog** nace de una realidad personal profunda: el abuelo de su creador padece Parkinson en etapa inicial-media (clasificación Hoehn y Yahr 1-2.5). 
+**ParkLog** nace de una mi realidad: Mi abuelo padece Parkinson en etapa inicial-media (clasificación Hoehn y Yahr 1-2.5). 
 
-A menudo, la literatura médica o las herramientas tecnológicas para pacientes crónicos se enfocan en proyecciones futuras desalentadoras, lo que genera ansiedad y depresión en el núcleo familiar. En contraste, **ParkLog está diseñado desde la empatía y la resiliencia en el día a día**. 
+Como faimiliar cercano de un paciente con Parkinson he notado que las herramientas tecnológicas para pacientes con esta enfermedad se enfocan en proyecciones futuras desalentadoras, lo que genera ansiedad y depresión en el núcleo familiar. En contraste, **ParkLog está diseñado desde la empatía y la resiliencia en el día a día mientras los intenta ayudar en sus funciones motoras**. 
 
 El software se enfoca en resolver los retos inmediatos y cotidianos del paciente:
 *   **Físicos:** Pérdida de destreza manual y temblor intencional al comer, rigidez articular en extremidades superiores.
 *   **Deglución (Sialorrea):** Dificultades de salivación excesiva por debilitamiento de los músculos faciales y faríngeos.
-*   **Emocionales:** Incertidumbre física diaria mitigada mediante rutinas claras, ordenadas y guiadas de forma autónoma o con el apoyo de un cuidador.
+*   **Emocionales:** Incertidumbre física diaria mitigada mediante rutinas claras, ordenadas y guiadas de forma autónoma o con el apoyo de un cuidador/familiar.
 
 ---
 
@@ -36,11 +36,11 @@ La dosificación, los tiempos de los temporizadores y la naturaleza de las rutin
 
 ---
 
-## 🎨 Diseño de Accesibilidad Motriz (Stitch UI)
+## Diseño de Accesibilidad Motriz (Stitch UI)
 
 La interfaz gráfica de ParkLog está construida utilizando componentes declarativos basados en la filosofía de **Stitch**, adaptados meticulosamente para abordar los temblores musculares y la rigidez de dedos:
 
-*   **Botones Gigantes Ergonómicos (`<s-button>`):** Todos los targets interactivos tienen una altura mínima de **80px** (superando con creces la norma general de accesibilidad web de 48px).
+*   **Botones Gigantes Ergonómicos (`<s-button>`):** Todos los targets interactivos tienen una altura mínima de **80px** (superando con creces la norma general de accesibilidad web de 48px). Lo cual facilita la interaccion de adultos mayores.
 *   **Retroalimentación Táctil Inmediata:** Transiciones de escala activa aceleradas (`transform: scale(0.96)`) para simular la presión física de botones mecánicos, dando confirmación instantánea al paciente.
 *   **Mitigación de Temblores Activa:**
     *   `touch-action: manipulation` en CSS para desactivar el zoom por doble toque rápido en teléfonos inteligentes, impidiendo desajustes del diseño cuando hay toques involuntarios.
