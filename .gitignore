@@ -1,0 +1,17 @@
+# IDEs and local editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Project metadata and system files
+agent.md
+guia_ejercicios.csv
+guia_ejercicios.xls
+
+# Local OS files
+Thumbs.db
+Desktop.ini

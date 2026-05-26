@@ -329,6 +329,12 @@
         <h2 id="routine-day-title" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em; margin-bottom: 0px;">Sesión de Hoy</h2>
         <s-badge id="routine-type-badge">Fuerza & Agilidad</s-badge>
       </div>
+
+      <!-- Visual Guide Container -->
+      <div id="visual-guide-container" style="width: 100%; border-radius: 4px; overflow: hidden; margin-bottom: 24px; background-color: rgba(61, 86, 86, 0.05); display: flex; align-items: center; justify-content: center; min-height: 150px; border: 1px solid rgba(61, 86, 86, 0.15);">
+        <img id="visual-guide-img" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 4px; display: none;" alt="Guía visual del ejercicio" />
+        <span id="visual-guide-fallback" style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500; text-align: center; padding: 20px;">Cargando guía visual...</span>
+      </div>
       
       <!-- Visual safety alert active in "Asistido" stage -->
       <s-alert id="media-safety-alert" class="hidden" style="margin-bottom: 24px;">
@@ -389,6 +395,13 @@
         <p id="voice-step2-desc" style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px;">
           Traga saliva con firmeza inclinando ligeramente la barbilla hacia el pecho para ejercitar la garganta.
         </p>
+
+        <!-- Visual Guide for Swallowing Exercise -->
+        <div id="swallow-guide-container" style="width: 100%; border-radius: 4px; overflow: hidden; margin-bottom: 8px; background-color: rgba(61, 86, 86, 0.05); display: flex; align-items: center; justify-content: center; min-height: 150px; border: 1px solid rgba(61, 86, 86, 0.15);">
+          <img id="swallow-guide-img" src="assets/swallow.gif" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 4px;" alt="Guía visual de deglución" onerror="this.style.display='none'; document.getElementById('swallow-guide-fallback').style.display='block';" />
+          <span id="swallow-guide-fallback" style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500; text-align: center; padding: 20px; display: none;">Cargando guía visual...</span>
+        </div>
+
         <s-button id="btn-swallow-check" variant="secondary">Completado</s-button>
       </div>
     </s-card>
@@ -407,8 +420,9 @@
         stageBadgeMedia: "Asistido",
         btnBack: "Volver",
         routineHeader: "Sesión de Hoy",
-        mediaSafetyTitle: "Recomendación para tu sesión",
-        mediaSafetyContent: "Por tu comodidad y seguridad, te sugerimos realizar esta rutina sentado en una silla estable y con respaldo.",
+        mediaSafetyTitle: "Recomendación para la sesión",
+        mediaSafetyContentSolo: "Realice el ejercicio a su propio ritmo y hasta donde su cuerpo avance hoy de forma cómoda. Cada movimiento cuenta para mantener su movilidad.",
+        mediaSafetyContentAsistido: "Para el acompañante: Guíe con suavidad el movimiento para ayudar a que el ejercicio se ejecute de forma correcta, con paciencia y sin forzar las articulaciones.",
         btnTimerStart: "Iniciar",
         btnTimerPause: "Pausar",
         btnTimerReset: "Reiniciar",
@@ -428,6 +442,7 @@
         timerLabel: "Duración Recomendada",
         footerScience: "Diseño basado en el ensayo clínico PARK-EASE (2023) y directrices de Martignon et al. (2020).",
         days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+        visualGuideLoading: "Cargando guía visual...",
         routines: {
           agility: {
             title: "Agilidad de Manos",
@@ -450,7 +465,8 @@
         btnBack: "Back",
         routineHeader: "Today's Session",
         mediaSafetyTitle: "Session recommendation",
-        mediaSafetyContent: "For your comfort and safety, we suggest performing this routine while seated comfortably on a stable chair.",
+        mediaSafetyContentSolo: "Perform the exercise at your own pace and only as far as your body feels comfortable today. Every movement counts toward maintaining your mobility.",
+        mediaSafetyContentAsistido: "For the caregiver: Gently guide the movement to help complete the exercise correctly, with patience and without forcing the joints.",
         btnTimerStart: "Start",
         btnTimerPause: "Pause",
         btnTimerReset: "Reset",
@@ -470,6 +486,7 @@
         timerLabel: "Recommended Duration",
         footerScience: "Designed based on the PARK-EASE clinical trial (2023) and Martignon et al. (2020).",
         days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        visualGuideLoading: "Loading visual guide...",
         routines: {
           agility: {
             title: "Hand Agility",
@@ -541,7 +558,6 @@
       document.getElementById('btn-timer-reset').textContent = dictionary.btnTimerReset;
       
       document.getElementById('media-safety-title').textContent = dictionary.mediaSafetyTitle;
-      document.getElementById('media-safety-content').textContent = dictionary.mediaSafetyContent;
       document.getElementById('lbl-timer-type').textContent = dictionary.timerLabel;
       
       // Voice Module
@@ -555,6 +571,16 @@
       document.getElementById('btn-swallow-check').textContent = dictionary.btnSwallowCheck;
       
       document.getElementById('footer-science').textContent = dictionary.footerScience;
+
+      // Update fallback texts if active
+      const fallbackEl = document.getElementById('visual-guide-fallback');
+      if (fallbackEl) {
+        fallbackEl.textContent = dictionary.visualGuideLoading;
+      }
+      const swallowFallbackEl = document.getElementById('swallow-guide-fallback');
+      if (swallowFallbackEl) {
+        swallowFallbackEl.textContent = dictionary.visualGuideLoading;
+      }
     }
 
     function applyStageChanges() {
@@ -566,7 +592,10 @@
 
       if (isMedia) {
         badge.textContent = dictionary.stageBadgeMedia;
-        if (safetyAlert) safetyAlert.classList.remove('hidden');
+        if (safetyAlert) {
+          safetyAlert.classList.remove('hidden');
+          document.getElementById('media-safety-content').textContent = dictionary.mediaSafetyContentAsistido;
+        }
         
         if (routine.type === 'agility') {
           baseTime = Math.round(60 * 0.8); // 48s (20% reduction)
@@ -575,12 +604,29 @@
         }
       } else {
         badge.textContent = dictionary.stageBadgeInicial;
-        if (safetyAlert) safetyAlert.classList.add('hidden');
+        if (safetyAlert) {
+          safetyAlert.classList.remove('hidden');
+          document.getElementById('media-safety-content').textContent = dictionary.mediaSafetyContentSolo;
+        }
         
         baseTime = 60; // Default 60s
       }
 
       resetExerciseTimer();
+    }
+
+    function getRoutineImage(dayIndex, isMedia) {
+      const suffix = isMedia ? '_asistido.gif' : '_solo.gif';
+      switch (dayIndex) {
+        case 1: return 'assets/manos1' + suffix; // Lunes
+        case 2: return 'assets/cuerpo1' + suffix; // Martes
+        case 3: return 'assets/manos2' + suffix; // Miércoles
+        case 4: return 'assets/cuerpo2' + suffix; // Jueves
+        case 5: return 'assets/manos3' + suffix; // Viernes
+        case 6: return 'assets/cuerpo3' + suffix; // Sábado
+        case 0: return 'assets/cuerpo4' + suffix; // Domingo
+        default: return '';
+      }
     }
 
     function renderDailyRoutine() {
@@ -593,6 +639,32 @@
       
       const typeBadge = document.getElementById('routine-type-badge');
       typeBadge.textContent = routine.data.title;
+
+      // Update visual guide image dynamically based on day and stage
+      const currentStage = localStorage.getItem('fase') || 'inicial';
+      const isMedia = currentStage === 'media';
+      const imageUrl = getRoutineImage(dayIndex, isMedia);
+
+      const imgEl = document.getElementById('visual-guide-img');
+      const fallbackEl = document.getElementById('visual-guide-fallback');
+      
+      if (imageUrl) {
+        imgEl.src = imageUrl;
+        imgEl.style.display = 'block';
+        fallbackEl.style.display = 'none';
+        
+        // Academic comment: Saleem et al. (2024) / Martignon (2020) visual aids
+        // Gracefully handle image loading failures (e.g. missing GIF assets), falling back to the clinical loading card.
+        imgEl.onerror = function() {
+          imgEl.style.display = 'none';
+          fallbackEl.style.display = 'block';
+          fallbackEl.textContent = dictionary.visualGuideLoading;
+        };
+      } else {
+        imgEl.style.display = 'none';
+        fallbackEl.style.display = 'block';
+        fallbackEl.textContent = dictionary.visualGuideLoading;
+      }
     }
 
     function resetExerciseTimer() {
